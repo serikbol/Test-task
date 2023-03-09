@@ -5,6 +5,8 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 from selenium.webdriver.support import expected_conditions as EC
+import sys
+
 
 driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
 
@@ -29,13 +31,30 @@ departmentDropDown = driver.find_element(By.XPATH,'/html/body/div[1]/div/div[1]/
 departmentDropDown.click() 
 
 departmentSelect = departmentDropDown.find_elements(By.CSS_SELECTOR, 'a.dropdown-item')
+departmentList = []
+for department in departmentSelect:
+
+    departmentList.append(department.text)
 
 for department in departmentSelect:
-    if department.text == chosenDepartment:
-        department.click()
-        break
+
+
+    if chosenDepartment in departmentList:
+        try:
+            wait.until(EC.element_to_be_clickable(department))
+            is_clickable = True
+        except:
+            is_clickable = False
+        if department.text == chosenDepartment and is_clickable == True:
+            department.click()
+            break
+        elif department.get_attribute('class') == "text-muted disabled dropdown-item":
+            sys.exit(f"The {chosenDepartment} department has no available vacancies.")
+        else:
+            pass # TODO find way to display print(f'No Available Department by the name of {department}') only once, if no matches found
     else:
-        pass # TODO find way to display print(f'No Available Department by the name of {department}') only once, if no matches found
+        sys.exit(f'The {chosenDepartment} department is not listed')
+
 
 cookieDecline = driver.find_element(By.XPATH, '/html/body/div[7]/div[4]/div[3]')
 cookieDecline.click()
