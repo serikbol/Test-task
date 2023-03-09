@@ -1,5 +1,5 @@
 
-# Veeam Test Task
+# Test Task
 
 The script iterates through the rows of an input.csv, including both Department and Language values, then counts the amount of job listings for the specified filters. These values are then output into another CSV. Feel free to adjust the values in the input.csv, and see how the output.csv changes!
 
