@@ -9,10 +9,11 @@ import sys
 import csv
 
 
-def decline_cookies(driver):
+def decline_cookies():
     try:
         wait = WebDriverWait(driver, 10)
         cookie_decline = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[7]/div[4]/div[3]")))
+        cookie_decline = driver.find_element(By.XPATH, '/html/body/div[7]/div[4]/div[3]')
         cookie_decline.click()
     except:
         print("Unable to decline cookies.")
@@ -21,8 +22,7 @@ def get_department_list():
     
     department_dropdown.click()
     department_select = department_dropdown.find_elements(By.TAG_NAME, 'a')
-    # department_list = [department.text for department in department_select]
-    department_list = [department.text.rstrip() for department in department_select] # Needed for Product Management Department, as there is a stray &nbsp whitespace preceding it
+    department_list = [department.text.rstrip() for department in department_select] # Required for Product Management Department, as there is a stray &nbsp whitespace preceding it
     return department_list
 
 
@@ -38,10 +38,8 @@ def select_department(chosen_department):
                 department_select.click()
                 break
             except ElementClickInterceptedException:
-                # is_empty_department = True
                 department_dropdown.click()
                 return True
-                break
                 
 
 
@@ -85,19 +83,19 @@ with open('input.csv', 'r') as input_file, open('output.csv', 'w', newline='') a
     driver.get(url)
     driver.maximize_window()
     wait = WebDriverWait(driver, 10)
-    department_dropdown = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[1]/div/div[2]')
-    is_empty_department = False
-    decline_cookies(driver)
 
-    next(reader) # Skip Header values
+    department_dropdown = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[1]/div/div[2]') # could be improved?
+
+    decline_cookies()
+
+
+    next(reader) # Skip CSV Header values.
 
     for row in reader:
         chosen_department = row[0]
         chosen_language = row[1]
 
         is_empty_department = select_department(chosen_department)
-        # cookie_decline = driver.find_element(By.XPATH, '/html/body/div[7]/div[4]/div[3]')
-        # cookie_decline.click()
         select_language(chosen_language)
         
         if is_empty_department == True:
@@ -105,7 +103,7 @@ with open('input.csv', 'r') as input_file, open('output.csv', 'w', newline='') a
         else:
             listing_column = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[2]/div')
             listings = listing_column.find_elements(By.XPATH, './*')
-            for listing in listings:
+            for listing in listings: # 'No matches' <div> is an element in listings. Actual job listings are <a>.
                 if listing.tag_name == 'a':
                     listing_count = len(listings)
                     break
