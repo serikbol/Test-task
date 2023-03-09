@@ -15,7 +15,7 @@ def decline_cookies(driver):
         cookie_decline = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[7]/div[4]/div[3]")))
         cookie_decline.click()
     except:
-        print("Cookies banner not found or unable to decline cookies.")
+        print("Unable to decline cookies.")
 
 def get_department_list():
     
@@ -36,15 +36,14 @@ def select_department(chosen_department):
             try:
                 wait.until(EC.element_to_be_clickable(department_select))
                 department_select.click()
-                # listing_column = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[2]/div')
-                # listings = listing_column.find_elements(By.XPATH, './*')
-                # listing_count = len(listings)
                 break
             except ElementClickInterceptedException:
-                # listing_count = 0
+                # is_empty_department = True
                 department_dropdown.click()
+                return True
                 break
-    # return listing_count
+                
+
 
 def get_language_list():
     language_dropdown = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[1]/div/div[3]/div/div/button')
@@ -65,7 +64,13 @@ def select_language(chosen_language):
     for language in language_list:
         if language == chosen_language:
             language_select = driver.find_element(By.XPATH, f"//label[text()='{language}']/preceding-sibling::input")
-            language_select.click()
+            if not language_select.is_selected():
+                language_select.click()
+            for other_language in language_list:
+                if other_language != chosen_language:
+                    other_language_select = driver.find_element(By.XPATH, f"//label[text()='{other_language}']/preceding-sibling::input")
+                    if other_language_select.is_selected():
+                        other_language_select.click()
             break
 
 
@@ -81,7 +86,7 @@ with open('input.csv', 'r') as input_file, open('output.csv', 'w', newline='') a
     driver.maximize_window()
     wait = WebDriverWait(driver, 10)
     department_dropdown = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[1]/div/div[2]')
-
+    is_empty_department = False
     decline_cookies(driver)
 
     next(reader) # Skip Header values
@@ -90,13 +95,23 @@ with open('input.csv', 'r') as input_file, open('output.csv', 'w', newline='') a
         chosen_department = row[0]
         chosen_language = row[1]
 
-        select_department(chosen_department)
+        is_empty_department = select_department(chosen_department)
         # cookie_decline = driver.find_element(By.XPATH, '/html/body/div[7]/div[4]/div[3]')
         # cookie_decline.click()
         select_language(chosen_language)
-        listing_column = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[2]/div')
-        listings = listing_column.find_elements(By.XPATH, './*')
-        listing_count = len(listings)
+        
+        if is_empty_department == True:
+            listing_count = 0
+        else:
+            listing_column = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[2]/div')
+            listings = listing_column.find_elements(By.XPATH, './*')
+            for listing in listings:
+                if listing.tag_name == 'a':
+                    listing_count = len(listings)
+                    break
+                else:
+                    listing_count = 0
+
         writer.writerow([chosen_department, chosen_language, listing_count])
 
     driver.quit()
